@@ -1,0 +1,17 @@
+body {
+    overflow-x: hidden;
+}
+
+#wrapper {
+    overflow-x: hidden;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    transition: margin 0.25s ease-out;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: #343a40 !important;
+    color: #0d6efd !important;
+}

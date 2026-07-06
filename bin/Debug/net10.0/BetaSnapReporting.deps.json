@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "BetaSnapReporting/1.0.0": {
+        "dependencies": {
+          "MiniExcel": "1.45.0"
+        },
+        "runtime": {
+          "BetaSnapReporting.dll": {}
+        }
+      },
+      "MiniExcel/1.45.0": {
+        "runtime": {
+          "lib/net10.0/MiniExcel.dll": {
+            "assemblyVersion": "1.45.0.0",
+            "fileVersion": "1.45.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "BetaSnapReporting/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MiniExcel/1.45.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-VsBtvXyhfPcbtNliuD9IMNqfBW01kRQl2/tA7JRIGjj82rcKNrz9Gfpn1FW8euXw91gkINWZuQv+n6XUURB3XA==",
+      "path": "miniexcel/1.45.0",
+      "hashPath": "miniexcel.1.45.0.nupkg.sha512"
+    }
+  }
+}

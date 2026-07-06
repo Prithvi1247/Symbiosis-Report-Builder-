@@ -1,0 +1,72 @@
+@model (BetaSnapReporting.Models.FilterCondition Condition, BetaSnapReporting.Models.ReportMetadata Metadata, int Index)
+@{
+    var cond = Model.Condition;
+    var meta = Model.Metadata;
+    var i = Model.Index;
+    
+    // Determine target column type to selectively display specialized elements
+    var targetMeta = meta.Columns.FirstOrDefault(c => c.ColumnName == cond.ColumnName);
+    var dataType = targetMeta?.DataType ?? "Text";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ISH Report Builder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+        body { background-color: #F8F9FA; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #212529; }
+        .bg-sidebar { background-color: #1E2D4B !important; }
+        .sidebar-link { color: #D1D5DB; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { color: #FFFFFF; background-color: rgba(255,255,255,0.08); border-left-color: #3B82F6; }
+        .btn-enterprise-primary { background-color: #1E3A5F !important; color: #FFFFFF !important; border: none; }
+        .btn-enterprise-primary:hover { background-color: #152944 !important; }
+        .text-dark-gray { color: #4B5563 !important; }
+        .extra-small { font-size: 0.75rem; letter-spacing: 0.05em; }
+        .table-viewport-container { max-height: 600px; overflow-y: auto; overflow-x: auto; border: 1px solid #DEE2E6; }
+        .table-enterprise th { background-color: #F1F5F9 !important; color: #1F2937 !important; font-weight: 600; font-size: 0.85rem; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #CBD5E1 !important; }
+        .table-enterprise td { font-size: 0.85rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 220px; color: #374151; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0 min-vh-100">
+            
+            <div class="col-auto bg-sidebar d-flex flex-column justify-content-between p-0" style="width: 250px;">
+                <div>
+                    <div class="p-3 border-bottom border-secondary border-opacity-25 text-white">
+                        <div class="fw-bold fs-5 tracking-tight"><i class="bi bi-layer-wardrobe me-2 text-info"></i>Report Builder</div>
+                        <span class="text-white-50 extra-small text-uppercase">Admissions Management</span>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="px-3 text-white-50 extra-small text-uppercase fw-bold mb-2">Applicant Reports</div>
+                        <a asp-controller="Report" asp-action="Applicants" class="d-block px-3 py-2 sidebar-link active">
+                            <i class="bi bi-file-earmark-text me-2"></i>Applicant Master Report
+                        </a>
+                        
+                        <div class="px-3 text-white-50 extra-small text-uppercase fw-bold mb-2 mt-4">System Utilities</div>
+                        <a href="#" class="d-block px-3 py-2 sidebar-link disabled opacity-50">
+                            <i class="bi bi-gear me-2"></i>Configuration Settings
+                        </a>
+                    </div>
+                </div>
+
+                <div class="p-3 border-top border-secondary border-opacity-25 text-white-50 small">
+                    <div class="fw-bold text-white small">ISH Information Systems</div>
+                    <div class="extra-small opacity-75 mt-1"><i class="bi bi-lock-fill text-warning"></i> Internal Use Only</div>
+                </div>
+            </div>
+
+            <div class="col p-4" style="overflow-x: hidden;">
+                @RenderBody()
+            </div>
+
+        </div>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

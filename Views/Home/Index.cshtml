@@ -1,0 +1,13 @@
+@model BetaSnapReporting.ViewModels.Home.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="p-5 mb-4 bg-light rounded-3 shadow-sm border">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Beta SNAP Reorganized System Shell</h1>
+        <p class="col-md-8 fs-4">Current Layer: @Model.EnvironmentName | Execution Target: @Model.CurrentSprint</p>
+        <p class="text-muted">Architectural folders (ViewModels, Interfaces, Utilities, Configuration) are fully wired into the runtime engine.</p>
+        <a asp-controller="Report" asp-action="Applicants" class="btn btn-primary btn-lg px-4">Navigate to Applicant Master</a>
+    </div>
+</div>
