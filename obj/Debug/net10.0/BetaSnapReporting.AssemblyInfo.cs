@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BetaSnapReporting")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c3ef4bfdc36037e17bc6a6e890577f1c9fc56981")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aa5e999ebb876dc389658c41696457ccd4a9ea9f")]
 [assembly: System.Reflection.AssemblyProductAttribute("BetaSnapReporting")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BetaSnapReporting")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

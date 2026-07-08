@@ -1,10 +1,11 @@
-<!-- Applicants.cshtml -->
 @model BetaSnapReporting.ViewModels.Report.ApplicantMasterViewModel
 @using System.Text.Encodings.Web
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Applicant Master Report";
 }
+
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
 <div class="mb-4">
     <h3 class="fw-bold text-dark mb-1">Applicant Master Report</h3>
@@ -147,6 +148,8 @@ else
 }
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
     <script>
         let categoricalValuesDictionary = {};
         @foreach (var col in Model.MetadataSummary.Columns.Where(c => c.DataType == "Categorical" || c.DataType == "Boolean"))
@@ -155,26 +158,57 @@ else
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".ts-categorical-select").forEach(initTomSelectForRow);
             document.querySelectorAll(".filter-entry-row").forEach(row => syncRowWidgetDisplay(row));
         });
+
+        function initTomSelectForRow(selectEl) {
+            const hiddenInput = selectEl.closest(".widget-box").querySelector(".hidden-serialized-value");
+            const ts = new TomSelect(selectEl, {
+                plugins: ["remove_button"],
+                persist: false,
+                create: false,
+                onChange: values => { hiddenInput.value = Array.isArray(values) ? values.join(",") : values; }
+            });
+            selectEl.tomSelectInstance = ts;
+            hiddenInput.value = ts.getValue().join(",");
+        }
 
         function syncRowWidgetDisplay(row) {
             const select = row.querySelector(".field-selector");
             const option = select.options[select.selectedIndex];
-            let dataType = option ? option.getAttribute("data-type") : "Text";
-            if (!dataType) dataType = "Text";
-
-            const resolvedWidgetType = (dataType === "Boolean") ? "Categorical" : dataType;
+            const widgetType = option ? (option.getAttribute("data-widget") || "TextBox") : "TextBox";
+            const columnName = select.value;
 
             row.querySelectorAll(".widget-box").forEach(box => {
-                const isActive = box.getAttribute("data-widget") === resolvedWidgetType;
+                const isActive = box.getAttribute("data-widget") === widgetType;
                 box.classList.toggle("d-none", !isActive);
                 box.querySelectorAll("input, select").forEach(field => {
                     field.disabled = !isActive;
                 });
             });
 
+            if (widgetType === "MultiSelectDropdown") {
+                refreshCategoricalOptions(row, columnName);
+            }
+
             toggleBetweenInputs(row);
+        }
+
+        function refreshCategoricalOptions(row, columnName) {
+            const selectEl = row.querySelector(".ts-categorical-select");
+            if (!selectEl || !selectEl.tomSelectInstance) return;
+
+            const ts = selectEl.tomSelectInstance;
+            const values = categoricalValuesDictionary[columnName] || [];
+
+            ts.clear(true);
+            ts.clearOptions();
+            values.forEach(v => ts.addOption({ value: v, text: v }));
+            ts.refreshOptions(false);
+
+            const hiddenInput = selectEl.closest(".widget-box").querySelector(".hidden-serialized-value");
+            if (hiddenInput) hiddenInput.value = "";
         }
 
         function toggleBetweenInputs(row) {

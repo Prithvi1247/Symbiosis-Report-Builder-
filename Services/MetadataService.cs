@@ -93,9 +93,8 @@ public class MetadataService : IMetadataService
             {
                 colMeta.DataType = "Date";
             }
-            else if (colMeta.DistinctCount <= 45 || (colMeta.DistinctCount < (rows.Count * 0.25))) 
+            else if (colMeta.DistinctCount <= 500 || (colMeta.DistinctCount < (rows.Count * 0.5)))
             {
-                // Heuristic bound: If highly repetitive string vectors exist, classify as Categorical selection arrays
                 colMeta.DataType = "Categorical";
             }
             else
@@ -130,8 +129,8 @@ public class MetadataService : IMetadataService
 
                 case "Categorical":
                     colMeta.FilterType = "MultiSelect";
-                    colMeta.WidgetType = "CheckBoxList";
-                    colMeta.UniqueValues = distinctItems; // Cleaned, sorted, case-grouped distinct items
+                    colMeta.WidgetType = "MultiSelectDropdown";
+                    colMeta.UniqueValues = distinctItems;
                     colMeta.IsFilterable = true;
                     colMeta.IsSearchable = true;
                     break;

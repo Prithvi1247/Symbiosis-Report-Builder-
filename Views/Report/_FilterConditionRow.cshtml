@@ -1,4 +1,3 @@
-<!-- _FilterConditionRow.cshtml -->
 @model BetaSnapReporting.Models.FilterCondition
 @{
     var meta = ViewData["Metadata"] as BetaSnapReporting.Models.ReportMetadata;
@@ -19,7 +18,7 @@
                 {
                     @foreach (var col in meta.Columns)
                     {
-                        <!option value="@col.ColumnName" @(Model.ColumnName == col.ColumnName ? "selected" : "") data-type="@col.DataType">@col.DisplayName</!option>
+                        <!option value="@col.ColumnName" @(Model.ColumnName == col.ColumnName ? "selected" : "") data-type="@col.DataType" data-widget="@col.WidgetType">@col.DisplayName</!option>
                     }
                 }
             </select>
@@ -64,11 +63,11 @@
             <label class="extra-small fw-bold text-dark-gray text-uppercase mb-1 d-block">Filter Value</label>
             <div class="widget-container">
                 
-                <div class="widget-box" data-widget="Text">
+                <div class="widget-box" data-widget="TextBox">
                     <input type="text" name="Conditions[@i].Value" value="@(dataType == "Text" ? Model.Value : "")" class="form-control form-control-sm" placeholder="Search string..." />
                 </div>
 
-                <div class="widget-box" data-widget="Numeric">
+                <div class="widget-box" data-widget="NumberRange">
                     <div class="row g-1">
                         <div class="col">
                             <input type="number" name="Conditions[@i].Value" value="@(dataType == "Numeric" ? Model.Value : "")" class="form-control form-control-sm" placeholder="Min Value" />
@@ -79,7 +78,7 @@
                     </div>
                 </div>
 
-                <div class="widget-box" data-widget="Date">
+                <div class="widget-box" data-widget="DatePicker">
                     <div class="row g-1">
                         <div class="col">
                             <input type="date" name="Conditions[@i].Value" value="@(dataType == "Date" ? Model.Value : "")" class="form-control form-control-sm" />
@@ -90,9 +89,9 @@
                     </div>
                 </div>
 
-                <div class="widget-box" data-widget="Categorical">
+                <div class="widget-box" data-widget="CheckBoxList">
                     <div class="border rounded bg-white p-2 text-wrap checkbox-list-scroll" style="max-height: 85px; overflow-y: auto;" onchange="serializeCheckboxes(this.closest('.filter-entry-row'))">
-                        @if (targetMeta != null && (dataType == "Categorical" || dataType == "Boolean"))
+                        @if (targetMeta != null && dataType == "Boolean")
                         {
                             var activeTokens = !string.IsNullOrEmpty(Model.Value) 
                                 ? Model.Value.Split(',').Select(v => v.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) 
@@ -107,7 +106,25 @@
                             }
                         }
                     </div>
-                    <input type="hidden" name="Conditions[@i].Value" value="@((dataType == "Categorical" || dataType == "Boolean") ? Model.Value : "")" class="hidden-serialized-value" />
+                    <input type="hidden" name="Conditions[@i].Value" value="@(dataType == "Boolean" ? Model.Value : "")" class="hidden-serialized-value" />
+                </div>
+
+                <div class="widget-box" data-widget="MultiSelectDropdown">
+                    @{
+                        var activeCatTokens = !string.IsNullOrEmpty(Model.Value) 
+                            ? Model.Value.Split(',').Select(v => v.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) 
+                            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    }
+                    <select class="form-select form-select-sm ts-categorical-select" multiple data-row-index="@i">
+                        @if (targetMeta != null && dataType == "Categorical")
+                        {
+                            @foreach (var val in targetMeta.UniqueValues)
+                            {
+                                <!option value="@val" @(activeCatTokens.Contains(val) ? "selected" : "")>@val</!option>
+                            }
+                        }
+                    </select>
+                    <input type="hidden" name="Conditions[@i].Value" value="@(dataType == "Categorical" ? Model.Value : "")" class="hidden-serialized-value" />
                 </div>
 
             </div>
