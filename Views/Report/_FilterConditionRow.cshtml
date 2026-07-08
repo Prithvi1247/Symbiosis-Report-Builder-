@@ -1,0 +1,131 @@
+<!-- _FilterConditionRow.cshtml -->
+@model BetaSnapReporting.Models.FilterCondition
+@{
+    var meta = ViewData["Metadata"] as BetaSnapReporting.Models.ReportMetadata;
+    var i = (int)(ViewData["Index"] ?? 0);
+    
+    var targetMeta = meta?.Columns?.FirstOrDefault(c => c.ColumnName == Model.ColumnName);
+    var dataType = targetMeta?.DataType ?? "Text";
+}
+
+<div class="p-3 mb-2 bg-white border rounded shadow-sm filter-entry-row" data-datatype="@dataType">
+    <div class="row g-2 align-items-end">
+        
+        <div class="col-md-3">
+            <label class="extra-small fw-bold text-dark-gray text-uppercase mb-1 d-block">Column Name</label>
+            <select name="Conditions[@i].ColumnName" class="form-select form-select-sm field-selector" onchange="syncRowWidgetDisplay(this.closest('.filter-entry-row'))">
+                <option value="">-- Select Column --</option>
+                @if (meta?.Columns != null)
+                {
+                    @foreach (var col in meta.Columns)
+                    {
+                        <!option value="@col.ColumnName" @(Model.ColumnName == col.ColumnName ? "selected" : "") data-type="@col.DataType">@col.DisplayName</!option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="extra-small fw-bold text-dark-gray text-uppercase mb-1 d-block">Operator</label>
+            <select name="Conditions[@i].Operator" class="form-select form-select-sm operator-selector" onchange="toggleBetweenInputs(this.closest('.filter-entry-row'))">
+                @if (dataType == "Numeric")
+                {
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>=</!option>
+                    <!option value=">" @(Model.Operator == ">" ? "selected" : "")>&gt;</!option>
+                    <!option value=">=" @(Model.Operator == ">=" ? "selected" : "")>&gt;=</!option>
+                    <!option value="<" @(Model.Operator == "<" ? "selected" : "")>&lt;</!option>
+                    <!option value="<=" @(Model.Operator == "<=" ? "selected" : "")>&lt;=</!option>
+                    <!option value="Between" @(Model.Operator == "Between" ? "selected" : "")>Between</!option>
+                }
+                else if (dataType == "Date")
+                {
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>On Date</!option>
+                    <!option value="Before" @(Model.Operator == "Before" ? "selected" : "")>Before</!option>
+                    <!option value="After" @(Model.Operator == "After" ? "selected" : "")>After</!option>
+                    <!option value="Between" @(Model.Operator == "Between" ? "selected" : "")>Between Dates</!option>
+                }
+                else if (dataType == "Categorical" || dataType == "Boolean")
+                {
+                    <!option value="MultiSelect" @(Model.Operator == "MultiSelect" || string.IsNullOrEmpty(Model.Operator) ? "selected" : "")>Is Among Selection</!option>
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>Exactly Equals</!option>
+                }
+                else
+                {
+                    <!option value="Contains" @(Model.Operator == "Contains" || string.IsNullOrEmpty(Model.Operator) ? "selected" : "")>Contains</!option>
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>Equals</!option>
+                    <!option value="Not Equals" @(Model.Operator == "Not Equals" ? "selected" : "")>Not Equals</!option>
+                    <!option value="StartsWith" @(Model.Operator == "StartsWith" ? "selected" : "")>Starts With</!option>
+                    <!option value="EndsWith" @(Model.Operator == "EndsWith" ? "selected" : "")>Ends With</!option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="extra-small fw-bold text-dark-gray text-uppercase mb-1 d-block">Filter Value</label>
+            <div class="widget-container">
+                
+                <div class="widget-box" data-widget="Text">
+                    <input type="text" name="Conditions[@i].Value" value="@(dataType == "Text" ? Model.Value : "")" class="form-control form-control-sm" placeholder="Search string..." />
+                </div>
+
+                <div class="widget-box" data-widget="Numeric">
+                    <div class="row g-1">
+                        <div class="col">
+                            <input type="number" name="Conditions[@i].Value" value="@(dataType == "Numeric" ? Model.Value : "")" class="form-control form-control-sm" placeholder="Min Value" />
+                        </div>
+                        <div class="col range-input d-none">
+                            <input type="number" name="Conditions[@i].Value2" value="@(dataType == "Numeric" ? Model.Value2 : "")" class="form-control form-control-sm" placeholder="Max Value" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-box" data-widget="Date">
+                    <div class="row g-1">
+                        <div class="col">
+                            <input type="date" name="Conditions[@i].Value" value="@(dataType == "Date" ? Model.Value : "")" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col range-input d-none">
+                            <input type="date" name="Conditions[@i].Value2" value="@(dataType == "Date" ? Model.Value2 : "")" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-box" data-widget="Categorical">
+                    <div class="border rounded bg-white p-2 text-wrap checkbox-list-scroll" style="max-height: 85px; overflow-y: auto;" onchange="serializeCheckboxes(this.closest('.filter-entry-row'))">
+                        @if (targetMeta != null && (dataType == "Categorical" || dataType == "Boolean"))
+                        {
+                            var activeTokens = !string.IsNullOrEmpty(Model.Value) 
+                                ? Model.Value.Split(',').Select(v => v.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) 
+                                : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                            @foreach (var val in targetMeta.UniqueValues)
+                            {
+                                <div class="form-check form-check-inline m-0 me-2">
+                                    <input type="checkbox" value="@val" class="form-check-input row-checkbox" @(activeTokens.Contains(val) ? "checked" : "") />
+                                    <label class="form-check-label small">@val</label>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <input type="hidden" name="Conditions[@i].Value" value="@((dataType == "Categorical" || dataType == "Boolean") ? Model.Value : "")" class="hidden-serialized-value" />
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-2 pb-1">
+            <div class="form-check text-start">
+                <input type="checkbox" name="Conditions[@i].IncludeBlankValues" value="true" class="form-check-input" id="blank_check_@i" @(Model.IncludeBlankValues ? "checked" : "") />
+                <input type="hidden" name="Conditions[@i].IncludeBlankValues" value="false" />
+                <label class="form-check-label extra-small fw-bold text-dark-gray text-uppercase" for="blank_check_@i">Include Blanks</label>
+            </div>
+        </div>
+
+        <div class="col-md-1 text-end pb-1">
+            <button type="submit" name="submitAction" value="DeleteRow" onclick="document.getElementById('removeIndex').value='@i';" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center w-100">
+                <i class="bi bi-trash-fill me-1"></i>Delete
+            </button>
+        </div>
+
+    </div>
+</div>

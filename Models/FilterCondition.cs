@@ -1,3 +1,4 @@
+// filterCondition.cs
 namespace BetaSnapReporting.Models;
 
 public class FilterCondition

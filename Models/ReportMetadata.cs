@@ -1,3 +1,4 @@
+// ReportMetaData.cd
 namespace BetaSnapReporting.Models;
 
 public class ReportMetadata

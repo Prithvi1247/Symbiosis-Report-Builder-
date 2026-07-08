@@ -1,3 +1,5 @@
+// ErrorViewModel.cs
+
 namespace BetaSnapReporting.Models;
 
 public class ErrorViewModel

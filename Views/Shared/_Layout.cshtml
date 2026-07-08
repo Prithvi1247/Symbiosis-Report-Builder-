@@ -1,14 +1,6 @@
-@model (BetaSnapReporting.Models.FilterCondition Condition, BetaSnapReporting.Models.ReportMetadata Metadata, int Index)
 @{
-    var cond = Model.Condition;
-    var meta = Model.Metadata;
-    var i = Model.Index;
-    
-    // Determine target column type to selectively display specialized elements
-    var targetMeta = meta.Columns.FirstOrDefault(c => c.ColumnName == cond.ColumnName);
-    var dataType = targetMeta?.DataType ?? "Text";
+    // No strict tuple @model should be up here!
 }
-
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1,3 +1,4 @@
+<!-- Applicants.cshtml -->
 @model BetaSnapReporting.ViewModels.Report.ApplicantMasterViewModel
 @using System.Text.Encodings.Web
 @{
@@ -43,8 +44,12 @@ else
                 <div id="filterContainer">
                     @for (int idx = 0; idx < Model.ActiveFilter.Conditions.Count; idx++)
                     {
-                        var partialModel = (object)(Model.ActiveFilter.Conditions[idx], Model.MetadataSummary, idx);
-                        @await Html.PartialAsync("_FilterRow", partialModel)
+                        var rowViewData = new ViewDataDictionary(ViewData)
+                        {
+                            { "Index", idx },
+                            { "Metadata", Model.MetadataSummary }
+                        };
+                        @await Html.PartialAsync("~/Views/Report/_FilterConditionRow.cshtml", Model.ActiveFilter.Conditions[idx], rowViewData)
                     }
                 </div>
 
@@ -162,7 +167,11 @@ else
             const resolvedWidgetType = (dataType === "Boolean") ? "Categorical" : dataType;
 
             row.querySelectorAll(".widget-box").forEach(box => {
-                box.classList.toggle("d-none", box.getAttribute("data-widget") !== resolvedWidgetType);
+                const isActive = box.getAttribute("data-widget") === resolvedWidgetType;
+                box.classList.toggle("d-none", !isActive);
+                box.querySelectorAll("input, select").forEach(field => {
+                    field.disabled = !isActive;
+                });
             });
 
             toggleBetweenInputs(row);
@@ -171,7 +180,13 @@ else
         function toggleBetweenInputs(row) {
             const operator = row.querySelector(".operator-selector").value;
             row.querySelectorAll(".range-input").forEach(el => {
-                el.classList.toggle("d-none", operator !== "Between");
+                const isBetween = operator === "Between";
+                el.classList.toggle("d-none", !isBetween);
+                el.querySelectorAll("input").forEach(field => {
+                    if (!field.closest(".widget-box").classList.contains("d-none")) {
+                        field.disabled = !isBetween;
+                    }
+                });
             });
         }
 

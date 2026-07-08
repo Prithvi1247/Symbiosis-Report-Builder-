@@ -1,3 +1,4 @@
+// FilterService.cs
 using BetaSnapReporting.Interfaces;
 using BetaSnapReporting.Models;
 
@@ -22,21 +23,23 @@ public class FilterService : IFilterService
         return rows.Where(row => EvaluateRow(row, request, metaLookup)).ToList();
     }
 
-    private bool EvaluateRow(Dictionary<string, object> row, FilterRequest request, Dictionary<string, ColumnMetadata> metaLookup)
+   private bool EvaluateRow(Dictionary<string, object> row, FilterRequest request, Dictionary<string, ColumnMetadata> metaLookup)
     {
         bool isAnd = request.LogicalOperator.Equals("AND", StringComparison.OrdinalIgnoreCase);
+        bool anyEvaluated = false;
 
         foreach (var condition in request.Conditions)
         {
             if (string.IsNullOrWhiteSpace(condition.ColumnName)) continue;
+            anyEvaluated = true;
 
             bool isMatch = EvaluateCondition(row, condition, metaLookup);
 
-            if (isAnd && !isMatch) return false; // Fail early for AND joins
-            if (!isAnd && isMatch) return true;  // Pass early for OR joins
+            if (isAnd && !isMatch) return false;
+            if (!isAnd && isMatch) return true;
         }
 
-        return isAnd; // If AND loop finishes, all matched. If OR finishes, none matched.
+        return isAnd || !anyEvaluated;
     }
 
     private bool EvaluateCondition(Dictionary<string, object> row, FilterCondition cond, Dictionary<string, ColumnMetadata> metaLookup)
@@ -62,7 +65,7 @@ public class FilterService : IFilterService
         {
             "Numeric" => EvaluateNumeric(cellStr, cond.Operator, cond.Value, cond.Value2),
             "Date" => EvaluateDate(cellStr, cond.Operator, cond.Value, cond.Value2),
-            "Boolean" => EvaluateBoolean(cellStr, cond.Operator, cond.Value),
+            "Boolean" => EvaluateCategorical(cellStr, cond.Operator, cond.Value),   // was EvaluateBoolean
             "Categorical" => EvaluateCategorical(cellStr, cond.Operator, cond.Value),
             _ => EvaluateText(cellStr, cond.Operator, cond.Value)
         };

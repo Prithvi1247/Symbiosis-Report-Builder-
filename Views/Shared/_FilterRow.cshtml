@@ -1,9 +1,10 @@
-@model ValueTuple<BetaSnapReporting.Models.FilterCondition, BetaSnapReporting.Models.ReportMetadata, int>
+<!-- _FilterRow.cshtml -->
+@model BetaSnapReporting.Models.FilterCondition
 @{
-    var cond = Model.Item1;
-    var meta = Model.Item2;
-    var i = Model.Item3;
-    var targetMeta = meta.Columns.FirstOrDefault(c => c.ColumnName == cond.ColumnName);
+    var meta = ViewData["Metadata"] as BetaSnapReporting.Models.ReportMetadata;
+    var i = (int)(ViewData["Index"] ?? 0);
+    
+    var targetMeta = meta?.Columns?.FirstOrDefault(c => c.ColumnName == Model.ColumnName);
     var dataType = targetMeta?.DataType ?? "Text";
 }
 
@@ -14,9 +15,12 @@
             <label class="extra-small fw-bold text-dark-gray text-uppercase mb-1 d-block">Column Name</label>
             <select name="Conditions[@i].ColumnName" class="form-select form-select-sm field-selector" onchange="syncRowWidgetDisplay(this.closest('.filter-entry-row'))">
                 <option value="">-- Select Column --</option>
-                @foreach (var col in meta.Columns)
+                @if (meta?.Columns != null)
                 {
-                    <!option value="@col.ColumnName" @(cond.ColumnName == col.ColumnName ? "selected" : "") data-type="@col.DataType">@col.DisplayName</!option>
+                    @foreach (var col in meta.Columns)
+                    {
+                        <!option value="@col.ColumnName" @(Model.ColumnName == col.ColumnName ? "selected" : "") data-type="@col.DataType">@col.DisplayName</!option>
+                    }
                 }
             </select>
         </div>
@@ -26,32 +30,32 @@
             <select name="Conditions[@i].Operator" class="form-select form-select-sm operator-selector" onchange="toggleBetweenInputs(this.closest('.filter-entry-row'))">
                 @if (dataType == "Numeric")
                 {
-                    <!option value="Equals" @(cond.Operator == "Equals" ? "selected" : "")>=</!option>
-                    <!option value=">" @(cond.Operator == ">" ? "selected" : "")>&gt;</!option>
-                    <!option value=">=" @(cond.Operator == ">=" ? "selected" : "")>&gt;=</!option>
-                    <!option value="<" @(cond.Operator == "<" ? "selected" : "")>&lt;</!option>
-                    <!option value="<=" @(cond.Operator == "<=" ? "selected" : "")>&lt;=</!option>
-                    <!option value="Between" @(cond.Operator == "Between" ? "selected" : "")>Between</!option>
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>=</!option>
+                    <!option value=">" @(Model.Operator == ">" ? "selected" : "")>&gt;</!option>
+                    <!option value=">=" @(Model.Operator == ">=" ? "selected" : "")>&gt;=</!option>
+                    <!option value="<" @(Model.Operator == "<" ? "selected" : "")>&lt;</!option>
+                    <!option value="<=" @(Model.Operator == "<=" ? "selected" : "")>&lt;=</!option>
+                    <!option value="Between" @(Model.Operator == "Between" ? "selected" : "")>Between</!option>
                 }
                 else if (dataType == "Date")
                 {
-                    <!option value="Equals" @(cond.Operator == "Equals" ? "selected" : "")>On Date</!option>
-                    <!option value="Before" @(cond.Operator == "Before" ? "selected" : "")>Before</!option>
-                    <!option value="After" @(cond.Operator == "After" ? "selected" : "")>After</!option>
-                    <!option value="Between" @(cond.Operator == "Between" ? "selected" : "")>Between Dates</!option>
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>On Date</!option>
+                    <!option value="Before" @(Model.Operator == "Before" ? "selected" : "")>Before</!option>
+                    <!option value="After" @(Model.Operator == "After" ? "selected" : "")>After</!option>
+                    <!option value="Between" @(Model.Operator == "Between" ? "selected" : "")>Between Dates</!option>
                 }
                 else if (dataType == "Categorical" || dataType == "Boolean")
                 {
-                    <!option value="MultiSelect" @(cond.Operator == "MultiSelect" || string.IsNullOrEmpty(cond.Operator) ? "selected" : "")>Is Among Selection</!option>
-                    <!option value="Equals" @(cond.Operator == "Equals" ? "selected" : "")>Exactly Equals</!option>
+                    <!option value="MultiSelect" @(Model.Operator == "MultiSelect" || string.IsNullOrEmpty(Model.Operator) ? "selected" : "")>Is Among Selection</!option>
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>Exactly Equals</!option>
                 }
                 else
                 {
-                    <!option value="Contains" @(cond.Operator == "Contains" || string.IsNullOrEmpty(cond.Operator) ? "selected" : "")>Contains</!option>
-                    <!option value="Equals" @(cond.Operator == "Equals" ? "selected" : "")>Equals</!option>
-                    <!option value="Not Equals" @(cond.Operator == "Not Equals" ? "selected" : "")>Not Equals</!option>
-                    <!option value="StartsWith" @(cond.Operator == "StartsWith" ? "selected" : "")>Starts With</!option>
-                    <!option value="EndsWith" @(cond.Operator == "EndsWith" ? "selected" : "")>Ends With</!option>
+                    <!option value="Contains" @(Model.Operator == "Contains" || string.IsNullOrEmpty(Model.Operator) ? "selected" : "")>Contains</!option>
+                    <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>Equals</!option>
+                    <!option value="Not Equals" @(Model.Operator == "Not Equals" ? "selected" : "")>Not Equals</!option>
+                    <!option value="StartsWith" @(Model.Operator == "StartsWith" ? "selected" : "")>Starts With</!option>
+                    <!option value="EndsWith" @(Model.Operator == "EndsWith" ? "selected" : "")>Ends With</!option>
                 }
             </select>
         </div>
@@ -61,16 +65,16 @@
             <div class="widget-container">
                 
                 <div class="widget-box" data-widget="Text">
-                    <input type="text" name="Conditions[@i].Value" value="@(dataType == "Text" ? cond.Value : "")" class="form-control form-control-sm" placeholder="Search string..." />
+                    <input type="text" name="Conditions[@i].Value" value="@(dataType == "Text" ? Model.Value : "")" class="form-control form-control-sm" placeholder="Search string..." />
                 </div>
 
                 <div class="widget-box" data-widget="Numeric">
                     <div class="row g-1">
                         <div class="col">
-                            <input type="number" name="Conditions[@i].Value" value="@(dataType == "Numeric" ? cond.Value : "")" class="form-control form-control-sm" placeholder="Min Value" />
+                            <input type="number" name="Conditions[@i].Value" value="@(dataType == "Numeric" ? Model.Value : "")" class="form-control form-control-sm" placeholder="Min Value" />
                         </div>
                         <div class="col range-input d-none">
-                            <input type="number" name="Conditions[@i].Value2" value="@(dataType == "Numeric" ? cond.Value2 : "")" class="form-control form-control-sm" placeholder="Max Value" />
+                            <input type="number" name="Conditions[@i].Value2" value="@(dataType == "Numeric" ? Model.Value2 : "")" class="form-control form-control-sm" placeholder="Max Value" />
                         </div>
                     </div>
                 </div>
@@ -78,10 +82,10 @@
                 <div class="widget-box" data-widget="Date">
                     <div class="row g-1">
                         <div class="col">
-                            <input type="date" name="Conditions[@i].Value" value="@(dataType == "Date" ? cond.Value : "")" class="form-control form-control-sm" />
+                            <input type="date" name="Conditions[@i].Value" value="@(dataType == "Date" ? Model.Value : "")" class="form-control form-control-sm" />
                         </div>
                         <div class="col range-input d-none">
-                            <input type="date" name="Conditions[@i].Value2" value="@(dataType == "Date" ? cond.Value2 : "")" class="form-control form-control-sm" />
+                            <input type="date" name="Conditions[@i].Value2" value="@(dataType == "Date" ? Model.Value2 : "")" class="form-control form-control-sm" />
                         </div>
                     </div>
                 </div>
@@ -90,8 +94,8 @@
                     <div class="border rounded bg-white p-2 text-wrap checkbox-list-scroll" style="max-height: 85px; overflow-y: auto;" onchange="serializeCheckboxes(this.closest('.filter-entry-row'))">
                         @if (targetMeta != null && (dataType == "Categorical" || dataType == "Boolean"))
                         {
-                            var activeTokens = !string.IsNullOrEmpty(cond.Value) 
-                                ? cond.Value.Split(',').Select(v => v.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) 
+                            var activeTokens = !string.IsNullOrEmpty(Model.Value) 
+                                ? Model.Value.Split(',').Select(v => v.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) 
                                 : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                             @foreach (var val in targetMeta.UniqueValues)
@@ -103,7 +107,7 @@
                             }
                         }
                     </div>
-                    <input type="hidden" name="Conditions[@i].Value" value="@((dataType == "Categorical" || dataType == "Boolean") ? cond.Value : "")" class="hidden-serialized-value" />
+                    <input type="hidden" name="Conditions[@i].Value" value="@((dataType == "Categorical" || dataType == "Boolean") ? Model.Value : "")" class="hidden-serialized-value" />
                 </div>
 
             </div>
@@ -111,7 +115,7 @@
 
         <div class="col-md-2 pb-1">
             <div class="form-check text-start">
-                <input type="checkbox" name="Conditions[@i].IncludeBlankValues" value="true" class="form-check-input" id="blank_check_@i" @(cond.IncludeBlankValues ? "checked" : "") />
+                <input type="checkbox" name="Conditions[@i].IncludeBlankValues" value="true" class="form-check-input" id="blank_check_@i" @(Model.IncludeBlankValues ? "checked" : "") />
                 <input type="hidden" name="Conditions[@i].IncludeBlankValues" value="false" />
                 <label class="form-check-label extra-small fw-bold text-dark-gray text-uppercase" for="blank_check_@i">Include Blanks</label>
             </div>

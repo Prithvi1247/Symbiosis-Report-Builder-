@@ -1,3 +1,5 @@
+// ColumnMetadata.cs
+
 namespace BetaSnapReporting.Models;
 
 public class ColumnMetadata

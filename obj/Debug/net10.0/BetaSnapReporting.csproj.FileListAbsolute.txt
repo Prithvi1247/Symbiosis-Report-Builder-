@@ -16,6 +16,7 @@
 /Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/BetaSnapReporting.MvcApplicationPartsAssemblyInfo.cache
 /Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/BetaSnapReporting.RazorAssemblyInfo.cache
 /Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/BetaSnapReporting.RazorAssemblyInfo.cs
+/Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/BetaSnapReporting.sourcelink.json
 /Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/rjimswa.dswa.cache.json
 /Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/prithvirajrp/Documents/Documents - Prithviraj’s MacBook Air/Prithvi/Programming/Internships/ISH_Internship/Report Builder C#/BetaSnapReporting/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json

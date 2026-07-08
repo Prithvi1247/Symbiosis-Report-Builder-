@@ -1,3 +1,4 @@
+// FilterRequest.cs
 namespace BetaSnapReporting.Models;
 
 public class FilterRequest
