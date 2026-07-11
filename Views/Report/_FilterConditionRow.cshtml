@@ -30,6 +30,7 @@
                 @if (dataType == "Numeric")
                 {
                     <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>=</!option>
+                    <!option value="Not Equals" @(Model.Operator == "Not Equals" ? "selected" : "")>&ne;</!option>
                     <!option value=">" @(Model.Operator == ">" ? "selected" : "")>&gt;</!option>
                     <!option value=">=" @(Model.Operator == ">=" ? "selected" : "")>&gt;=</!option>
                     <!option value="<" @(Model.Operator == "<" ? "selected" : "")>&lt;</!option>
@@ -45,7 +46,7 @@
                 }
                 else if (dataType == "Categorical" || dataType == "Boolean")
                 {
-                    <!option value="MultiSelect" @(Model.Operator == "MultiSelect" || string.IsNullOrEmpty(Model.Operator) ? "selected" : "")>Is Among Selection</!option>
+                    <!option value="MultiSelect" @(Model.Operator == "MultiSelect" || string.IsNullOrEmpty(Model.Operator) ? "selected" : "")>In</!option>
                     <!option value="Equals" @(Model.Operator == "Equals" ? "selected" : "")>Exactly Equals</!option>
                 }
                 else

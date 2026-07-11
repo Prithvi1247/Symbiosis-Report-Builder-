@@ -20,7 +20,9 @@ public class ReportController : Controller
         _filterService = filterService;
     }
 
-    public IActionResult Applicants(FilterRequest request, string submitAction, int? removeIndex)
+    private const int PageSize = 50;
+
+    public IActionResult Applicants(FilterRequest request, string submitAction, int? removeIndex, int? pageNumber)
     {
         var viewModel = new ApplicantMasterViewModel
         {
@@ -39,19 +41,18 @@ public class ReportController : Controller
             request.Conditions = new List<FilterCondition>();
         }
 
-        // Server-Driven State Pipeline Rules (Streamlit Emulation Architecture)
         switch (submitAction)
         {
             case "AddRow":
                 request.Conditions.Add(new FilterCondition { ColumnName = "", Operator = "", Value = "" });
-                ModelState.Clear(); // Force Razor to completely rebuild elements from the updated Model state
+                ModelState.Clear();
                 break;
 
             case "DeleteRow":
                 if (removeIndex.HasValue && removeIndex.Value >= 0 && removeIndex.Value < request.Conditions.Count)
                 {
                     request.Conditions.RemoveAt(removeIndex.Value);
-                    ModelState.Clear(); // Force Razor to drop deleted DOM indexes entirely
+                    ModelState.Clear();
                 }
                 break;
 
@@ -61,24 +62,66 @@ public class ReportController : Controller
                 break;
         }
 
-        // Guarantee that at least one filter criteria workspace container remains visible
         if (!request.Conditions.Any())
         {
             request.Conditions.Add(new FilterCondition());
         }
 
+        // Resolve which columns are visible. Metadata-driven default (ColumnMetadata.IsVisibleByDefault)
+        // is used only on a genuine first load; any submission of the Visible Columns panel (tracked via
+        // the hidden marker field, since an all-unchecked submit sends no VisibleColumns entries at all)
+        // takes precedence and is honored exactly as the user configured it.
+        if (Request.Query.ContainsKey("VisibleColumnsSubmitted"))
+        {
+            request.VisibleColumns = request.VisibleColumns ?? new List<string>();
+        }
+        else
+        {
+            request.VisibleColumns = viewModel.MetadataSummary.Columns
+                .Where(c => c.IsVisibleByDefault)
+                .Select(c => c.ColumnName)
+                .ToList();
+
+            if (!request.VisibleColumns.Any())
+            {
+                request.VisibleColumns = viewModel.MetadataSummary.Columns.Select(c => c.ColumnName).ToList();
+            }
+        }
+
         viewModel.ActiveFilter = request;
 
-        // Execute analytical filter processing exclusively when Apply Filters is triggered
-        bool performFiltering = (submitAction == "Filter");
-        var filteredList = performFiltering
-            ? _filterService.ApplyFilter(allApplicants, viewModel.MetadataSummary, request).ToList()
-            : allApplicants;
+        bool skipFiltering = submitAction == "AddRow" || submitAction == "DeleteRow" || submitAction == "Reset";
+        var filteredList = skipFiltering
+            ? allApplicants
+            : _filterService.ApplyFilter(allApplicants, viewModel.MetadataSummary, request).ToList();
 
         viewModel.FilteredResultsCount = filteredList.Count;
-        viewModel.IsFiltered = performFiltering;
-        viewModel.SampleRecords = filteredList.Take(50).ToList();
-        viewModel.ColumnHeaders = allApplicants.Any() ? allApplicants.First().Keys.ToList() : new List<string>();
+        viewModel.IsFiltered = !skipFiltering && request.Conditions.Any(c =>
+            !string.IsNullOrWhiteSpace(c.ColumnName) &&
+            (!string.IsNullOrWhiteSpace(c.Value) || !string.IsNullOrWhiteSpace(c.Value2)));
+
+        bool filterConfigChanged = submitAction == "Filter" || submitAction == "AddRow" || submitAction == "DeleteRow" || submitAction == "Reset";
+
+        int totalPages = (int)Math.Ceiling(filteredList.Count / (double)PageSize);
+        if (totalPages < 1) totalPages = 1;
+
+        int currentPage = filterConfigChanged ? 1 : (pageNumber ?? 1);
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        viewModel.CurrentPage = currentPage;
+        viewModel.PageSize = PageSize;
+        viewModel.TotalPages = totalPages;
+
+        viewModel.SampleRecords = filteredList
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        var allColumnHeaders = allApplicants.Any() ? allApplicants.First().Keys.ToList() : new List<string>();
+        viewModel.ColumnHeaders = allColumnHeaders
+            .Where(h => request.VisibleColumns.Contains(h, StringComparer.OrdinalIgnoreCase))
+            .ToList();
 
         return View(viewModel);
     }
@@ -96,16 +139,19 @@ public class ReportController : Controller
     {
         var (headers, rows) = GetFilteredExportData(request);
 
-        // Reorder each row's dictionary to match the display column order before writing
-        var orderedRows = rows.Select(r =>
+        // Reorder each row's dictionary to match the display column order, with S.No first.
+        var orderedRows = new List<Dictionary<string, object>>();
+        int serialNo = 1;
+        foreach (var r in rows)
         {
-            var ordered = new Dictionary<string, object>();
+            var ordered = new Dictionary<string, object> { ["S.No"] = serialNo };
             foreach (var h in headers)
             {
                 ordered[h] = r.TryGetValue(h, out var v) ? v : "";
             }
-            return ordered;
-        }).ToList();
+            orderedRows.Add(ordered);
+            serialNo++;
+        }
 
         using var stream = new MemoryStream();
         MiniExcel.SaveAs(stream, orderedRows);
@@ -123,7 +169,13 @@ public class ReportController : Controller
         request.Conditions ??= new List<FilterCondition>();
 
         var filtered = _filterService.ApplyFilter(allApplicants, metadata, request).ToList();
-        var headers = allApplicants.Any() ? allApplicants.First().Keys.ToList() : new List<string>();
+        var allHeaders = allApplicants.Any() ? allApplicants.First().Keys.ToList() : new List<string>();
+
+        // Export only the columns currently checked in the Visible Columns panel.
+        // If none were submitted (e.g. a direct export call with no selection), export everything.
+        List<string> headers = (request.VisibleColumns != null && request.VisibleColumns.Any())
+            ? allHeaders.Where(h => request.VisibleColumns.Contains(h, StringComparer.OrdinalIgnoreCase)).ToList()
+            : allHeaders;
 
         return (headers, filtered);
     }
@@ -131,12 +183,17 @@ public class ReportController : Controller
     private string BuildCsv(List<string> headers, List<Dictionary<string, object>> rows)
     {
         var sb = new StringBuilder();
-        sb.AppendLine(string.Join(",", headers.Select(EscapeCsvField)));
+        var csvHeaders = new List<string> { "S.No" };
+        csvHeaders.AddRange(headers);
+        sb.AppendLine(string.Join(",", csvHeaders.Select(EscapeCsvField)));
 
+        int serialNo = 1;
         foreach (var row in rows)
         {
-            var line = headers.Select(h => EscapeCsvField(row.TryGetValue(h, out var v) ? v?.ToString() ?? "" : ""));
+            var line = new List<string> { serialNo.ToString() };
+            line.AddRange(headers.Select(h => EscapeCsvField(row.TryGetValue(h, out var v) ? v?.ToString() ?? "" : "")));
             sb.AppendLine(string.Join(",", line));
+            serialNo++;
         }
 
         return sb.ToString();

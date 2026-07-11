@@ -90,6 +90,7 @@ public class FilterService : IFilterService
         return op switch
         {
             "Equals" => cellNum == num1,
+            "Not Equals" => cellNum != num1,
             ">" => cellNum > num1,
             ">=" => cellNum >= num1,
             "<" => cellNum < num1,

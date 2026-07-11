@@ -93,13 +93,22 @@ public class MetadataService : IMetadataService
             {
                 colMeta.DataType = "Date";
             }
-            else if (colMeta.DistinctCount <= 500 || (colMeta.DistinctCount < (rows.Count * 0.5)))
-            {
-                colMeta.DataType = "Categorical";
-            }
+            
             else
             {
-                colMeta.DataType = "Text";
+                // Uniqueness ratio distinguishes free-text/identifier-like columns (names, emails,
+                // phone numbers, alphanumeric IDs — near-unique per row) from genuine categorical
+                // columns (City, State, Category — repetitive by nature), independent of column names.
+                double uniquenessRatio = nonNullValues.Count > 0
+                    ? (double)colMeta.DistinctCount / nonNullValues.Count
+                    : 0;
+
+                bool looksLikeFreeTextIdentifier = uniquenessRatio >= 0.8;
+
+                bool looksCategorical = !looksLikeFreeTextIdentifier
+                    && (colMeta.DistinctCount <= 500 || colMeta.DistinctCount < (rows.Count * 0.5));
+
+                colMeta.DataType = looksCategorical ? "Categorical" : "Text";
             }
 
             // 2. Assign Filters and Widgets derived completely from dynamic metadata state
