@@ -9,36 +9,31 @@
 .Trashes
 
 #==============================================================================
-# Python Caches and Compiled Files
-#==============================================================================
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-
-#==============================================================================
-# Python Virtual Environments
-#==============================================================================
-.venv/
-venv/
-ENV/
-env/
-
-#==============================================================================
-# IDEs and Text Editors (VS Code / PyCharm)
+# IDEs and Text Editors (VS Code / Visual Studio / Rider)
 #==============================================================================
 .vscode/
 .idea/
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
-*.swp
+*.sln.docstates
+*.user
+*.userosscache
+*.sln.DotSettings.user
+VisualStudioFolder3D/
 
 #==============================================================================
-# Environment Variables and Secrets (Never commit keys!)
+# .NET Build Artifacts and Caches
 #==============================================================================
-.env
-.env.local
-.env.*.local
-*.secret
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+.vs/
+.plastic/
+
+#==============================================================================
+# 

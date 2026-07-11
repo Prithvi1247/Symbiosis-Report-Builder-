@@ -29,7 +29,7 @@ else
         </div>
         <div class="card-body bg-body-tertiary p-3">
             <form method="get" asp-controller="Report" asp-action="Applicants" id="filterForm">
-                
+
                 <input type="hidden" id="removeIndex" name="removeIndex" value="" />
 
                 <div class="row align-items-center mb-3">
@@ -101,10 +101,47 @@ else
         </div>
     </div>
 
+    <div class="card shadow-sm border border-secondary border-opacity-25 mb-4">
+        <div class="card-body py-2 px-3">
+            <span class="extra-small fw-bold text-uppercase text-dark-gray d-block mb-1"><i class="bi bi-info-circle me-1"></i>Current Filters</span>
+            @{
+                var activeConditions = Model.ActiveFilter.Conditions
+                    .Where(c => !string.IsNullOrWhiteSpace(c.ColumnName) && (!string.IsNullOrWhiteSpace(c.Value) || !string.IsNullOrWhiteSpace(c.Value2)))
+                    .ToList();
+            }
+            @if (!activeConditions.Any())
+            {
+                <span class="text-muted small">No active filters</span>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-1 small">
+                    @foreach (var cond in activeConditions)
+                    {
+                        var colMeta = Model.MetadataSummary.Columns.FirstOrDefault(c => c.ColumnName == cond.ColumnName);
+                        var label = colMeta?.DisplayName ?? cond.ColumnName;
+                        string displayValue = cond.Operator == "Between"
+                            ? $"{cond.Value} - {cond.Value2}"
+                            : cond.Value.Replace(",", ", ");
+                        <li><span class="fw-semibold">@label</span> <span class="text-muted">@cond.Operator</span> <span>@displayValue</span></li>
+                    }
+                </ul>
+                <span class="extra-small text-muted">Logic: Match @(Model.ActiveFilter.LogicalOperator == "AND" ? "ALL" : "ANY") Conditions (@Model.ActiveFilter.LogicalOperator)</span>
+            }
+        </div>
+    </div>
+
     <div class="card shadow-sm border border-secondary border-opacity-25">
         <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
             <span class="extra-small fw-bold text-dark-gray text-uppercase"><i class="bi bi-table me-1"></i>Data Grid Viewer</span>
-            <button class="btn btn-xs btn-outline-secondary py-0 px-2 extra-small opacity-50" disabled><i class="bi bi-download me-1"></i>Excel Export</button>
+            <div class="d-flex gap-2">
+                <button type="submit" form="filterForm" formaction="@Url.Action("ExportCsv", "Report")" formmethod="get" class="btn btn-xs btn-outline-secondary py-0 px-2 extra-small">
+                    <i class="bi bi-filetype-csv me-1"></i>CSV Export
+                </button>
+                <button type="submit" form="filterForm" formaction="@Url.Action("ExportExcel", "Report")" formmethod="get" class="btn btn-xs btn-outline-secondary py-0 px-2 extra-small">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Excel Export
+                </button>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-viewport-container">
@@ -171,14 +208,20 @@ else
                 onChange: values => { hiddenInput.value = Array.isArray(values) ? values.join(",") : values; }
             });
             selectEl.tomSelectInstance = ts;
+
+            // Record which column this TomSelect instance currently reflects, so later loads
+            // never mistake "already correct" for "needs refreshing" and wipe the selection.
+            const row = selectEl.closest(".filter-entry-row");
+            selectEl.dataset.initializedColumn = row ? row.querySelector(".field-selector").value : "";
             hiddenInput.value = ts.getValue().join(",");
         }
 
+        // Pure visual show/hide. Safe to call on every page load AND on column change.
+        // Never touches TomSelect's data, so it can never wipe a restored selection.
         function syncRowWidgetDisplay(row) {
             const select = row.querySelector(".field-selector");
             const option = select.options[select.selectedIndex];
             const widgetType = option ? (option.getAttribute("data-widget") || "TextBox") : "TextBox";
-            const columnName = select.value;
 
             row.querySelectorAll(".widget-box").forEach(box => {
                 const isActive = box.getAttribute("data-widget") === widgetType;
@@ -188,11 +231,26 @@ else
                 });
             });
 
-            if (widgetType === "MultiSelectDropdown") {
-                refreshCategoricalOptions(row, columnName);
-            }
-
             toggleBetweenInputs(row);
+        }
+
+        // Fired ONLY by the field-selector's onchange — a genuine user-driven column switch.
+        // Never fired on page load, so restored filter state is never touched.
+        function onColumnChange(row) {
+            syncRowWidgetDisplay(row);
+
+            const select = row.querySelector(".field-selector");
+            const option = select.options[select.selectedIndex];
+            const widgetType = option ? (option.getAttribute("data-widget") || "TextBox") : "TextBox";
+            const columnName = select.value;
+
+            if (widgetType === "MultiSelectDropdown") {
+                const selectEl = row.querySelector(".ts-categorical-select");
+                if (selectEl && selectEl.dataset.initializedColumn !== columnName) {
+                    refreshCategoricalOptions(row, columnName);
+                    selectEl.dataset.initializedColumn = columnName;
+                }
+            }
         }
 
         function refreshCategoricalOptions(row, columnName) {

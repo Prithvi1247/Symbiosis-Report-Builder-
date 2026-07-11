@@ -12,7 +12,7 @@
         
         <div class="col-md-3">
             <label class="extra-small fw-bold text-dark-gray text-uppercase mb-1 d-block">Column Name</label>
-            <select name="Conditions[@i].ColumnName" class="form-select form-select-sm field-selector" onchange="syncRowWidgetDisplay(this.closest('.filter-entry-row'))">
+            <select name="Conditions[@i].ColumnName" class="form-select form-select-sm field-selector" onchange="onColumnChange(this.closest('.filter-entry-row'))">
                 <option value="">-- Select Column --</option>
                 @if (meta?.Columns != null)
                 {
