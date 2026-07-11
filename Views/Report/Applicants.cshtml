@@ -281,6 +281,53 @@ else
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <script>
+        const operatorsByDataType = {
+            Numeric: [
+                { value: "Equals", label: "=" },
+                { value: "Not Equals", label: "≠" },
+                { value: ">", label: ">" },
+                { value: ">=", label: "≥" },
+                { value: "<", label: "<" },
+                { value: "<=", label: "≤" },
+                { value: "Between", label: "Between" }
+            ],
+            Date: [
+                { value: "Equals", label: "On Date" },
+                { value: "Before", label: "Before" },
+                { value: "After", label: "After" },
+                { value: "Between", label: "Between Dates" }
+            ],
+            Categorical: [
+                { value: "MultiSelect", label: "Is Among Selection" },
+                { value: "Equals", label: "Exactly Equals" }
+            ],
+            Boolean: [
+                { value: "MultiSelect", label: "Is Among Selection" },
+                { value: "Equals", label: "Exactly Equals" }
+            ],
+            Text: [
+                { value: "Contains", label: "Contains" },
+                { value: "Equals", label: "Equals" },
+                { value: "Not Equals", label: "Not Equals" },
+                { value: "StartsWith", label: "Starts With" },
+                { value: "EndsWith", label: "Ends With" }
+            ]
+        };
+
+        function rebuildOperatorDropdown(row, dataType) {
+            const operatorSelect = row.querySelector(".operator-selector");
+            const options = operatorsByDataType[dataType] || operatorsByDataType.Text;
+
+            operatorSelect.innerHTML = "";
+            options.forEach((opt, idx) => {
+                const optionEl = document.createElement("option");
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.label;
+                if (idx === 0) optionEl.selected = true; // default operator for the new datatype
+                operatorSelect.appendChild(optionEl);
+            });
+        }
+
         let categoricalValuesDictionary = {};
         @foreach (var col in Model.MetadataSummary.Columns.Where(c => c.DataType == "Categorical" || c.DataType == "Boolean"))
         {
@@ -330,12 +377,14 @@ else
         // Fired ONLY by the field-selector's onchange — a genuine user-driven column switch.
         // Never fired on page load, so restored filter state is never touched.
         function onColumnChange(row) {
-            syncRowWidgetDisplay(row);
-
             const select = row.querySelector(".field-selector");
             const option = select.options[select.selectedIndex];
             const widgetType = option ? (option.getAttribute("data-widget") || "TextBox") : "TextBox";
+            const dataType = option ? (option.getAttribute("data-type") || "Text") : "Text";
             const columnName = select.value;
+
+            rebuildOperatorDropdown(row, dataType);
+            syncRowWidgetDisplay(row);
 
             if (widgetType === "MultiSelectDropdown") {
                 const selectEl = row.querySelector(".ts-categorical-select");
