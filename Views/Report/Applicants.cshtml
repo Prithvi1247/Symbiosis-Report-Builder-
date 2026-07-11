@@ -137,20 +137,34 @@ else
         </div>
         <div class="card-body bg-body-tertiary p-3">
             <input type="hidden" name="VisibleColumnsSubmitted" value="true" form="filterForm" />
-            <div class="d-flex flex-wrap gap-3">
-                @foreach (var col in Model.MetadataSummary.Columns)
-                {
-                    bool isChecked = Model.ActiveFilter.VisibleColumns.Contains(col.ColumnName, StringComparer.OrdinalIgnoreCase);
-                    <div class="form-check">
-                        <input type="checkbox" name="VisibleColumns" value="@col.ColumnName" class="form-check-input" id="col_@col.ColumnName.GetHashCode()" form="filterForm" @(isChecked ? "checked" : "") />
-                        <label class="form-check-label small" for="col_@col.ColumnName.GetHashCode()">@col.DisplayName</label>
-                    </div>
-                }
-            </div>
-            <div class="mt-3">
-                <button type="submit" name="submitAction" value="" form="filterForm" class="btn btn-sm btn-outline-dark fw-semibold px-3">
-                    <i class="bi bi-arrow-repeat me-1"></i>Update Columns
+
+            <div class="dropdown" id="visibleColumnsDropdown">
+                <button class="btn btn-sm btn-outline-dark dropdown-toggle fw-semibold px-3" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="bi bi-columns-gap me-1"></i>Select Columns
+                    <span class="badge bg-secondary ms-1" id="visibleColumnsCount">@Model.ActiveFilter.VisibleColumns.Count</span>
                 </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="width: 280px; max-height: 380px; overflow-y: auto;">
+                    <input type="text" class="form-control form-control-sm mb-2" placeholder="Search columns..." id="columnSearchBox" autocomplete="off" />
+                    <div class="d-flex justify-content-between mb-2 px-1">
+                        <button type="button" class="btn btn-link btn-sm p-0 extra-small" id="selectAllColumnsBtn">Select All</button>
+                        <button type="button" class="btn btn-link btn-sm p-0 extra-small text-danger" id="clearAllColumnsBtn">Clear All</button>
+                    </div>
+                    <div id="columnCheckboxList">
+                        @foreach (var col in Model.MetadataSummary.Columns)
+                        {
+                            bool isChecked = Model.ActiveFilter.VisibleColumns.Contains(col.ColumnName, StringComparer.OrdinalIgnoreCase);
+                            <div class="form-check column-option-row">
+                                <input type="checkbox" name="VisibleColumns" value="@col.ColumnName" class="form-check-input column-checkbox" id="col_@col.ColumnName.GetHashCode()" form="filterForm" @(isChecked ? "checked" : "") />
+                                <label class="form-check-label small column-option-label" for="col_@col.ColumnName.GetHashCode()">@col.DisplayName</label>
+                            </div>
+                        }
+                    </div>
+                    <div class="border-top mt-2 pt-2 text-end">
+                        <button type="submit" name="submitAction" value="" form="filterForm" class="btn btn-sm btn-enterprise-primary fw-semibold px-3">
+                            Apply
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -338,7 +352,49 @@ else
             document.querySelectorAll(".ts-categorical-select").forEach(initTomSelectForRow);
             document.querySelectorAll(".filter-entry-row").forEach(row => syncRowWidgetDisplay(row));
         });
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchBox = document.getElementById("columnSearchBox");
+            const checkboxRows = document.querySelectorAll(".column-option-row");
+            const countBadge = document.getElementById("visibleColumnsCount");
+            const selectAllBtn = document.getElementById("selectAllColumnsBtn");
+            const clearAllBtn = document.getElementById("clearAllColumnsBtn");
 
+            if (searchBox) {
+                searchBox.addEventListener("input", function () {
+                    const term = searchBox.value.trim().toLowerCase();
+                    checkboxRows.forEach(row => {
+                        const label = row.querySelector(".column-option-label").textContent.toLowerCase();
+                        row.classList.toggle("d-none", !label.includes(term));
+                    });
+                });
+
+                // Prevent the dropdown from closing when interacting with the search box
+                searchBox.addEventListener("click", e => e.stopPropagation());
+            }
+
+            function updateCount() {
+                const checked = document.querySelectorAll(".column-checkbox:checked").length;
+                if (countBadge) countBadge.textContent = checked;
+            }
+
+            document.querySelectorAll(".column-checkbox").forEach(cb => {
+                cb.addEventListener("change", updateCount);
+            });
+
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener("click", function () {
+                    document.querySelectorAll(".column-option-row:not(.d-none) .column-checkbox").forEach(cb => cb.checked = true);
+                    updateCount();
+                });
+            }
+
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener("click", function () {
+                    document.querySelectorAll(".column-option-row:not(.d-none) .column-checkbox").forEach(cb => cb.checked = false);
+                    updateCount();
+                });
+            }
+        });
         function initTomSelectForRow(selectEl) {
             const hiddenInput = selectEl.closest(".widget-box").querySelector(".hidden-serialized-value");
             const ts = new TomSelect(selectEl, {
